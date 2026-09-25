@@ -1,0 +1,1112 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   SYSTEM A — DESIGN SYSTEM
+   A high-end engineering digital-infrastructure visual language.
+   Almost-black base, layered graphite surfaces, very faint radial light,
+   restrained typography, glass materials, near-invisible motion.
+   No neon, no finance/crypto cues, no gold. Contrast built from luminance.
+   ========================================================================= */
+
+@theme {
+  /* Readable body text — Roboto (Latin + Cyrillic), Noto Sans SC for Chinese */
+  --font-sans: var(--font-roboto), var(--font-noto-sc), ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+    "Hiragino Sans GB", Helvetica, Arial, sans-serif;
+  /* Headings, subheadings, buttons, nav items — Book Antiqua (serif);
+     Noto Sans SC / system CJK carry the Chinese glyphs the serif lacks. */
+  --font-serif: "Book Antiqua", "Palatino Linotype", "Palatino", "Palatino LT STD",
+    "URW Palladio L", "Georgia", var(--font-noto-sc), "PingFang SC",
+    "Microsoft YaHei", "Hiragino Sans GB", serif;
+  --font-mono: var(--font-mono-geist), ui-monospace, "SF Mono", "JetBrains Mono",
+    "Fira Code", Menlo, monospace;
+}
+
+:root {
+  /* --- Base surfaces (graphite ladder) --- */
+  --sa-base: #060707;          /* page background, near-black */
+  --sa-surface-0: #0a0b0c;     /* lowest raised surface */
+  --sa-surface-1: #0e0f11;     /* card */
+  --sa-surface-2: #121316;     /* elevated card / panel */
+  --sa-surface-3: #17181c;     /* highest inline surface */
+  --sa-elevated: #1c1d22;      /* menus, dialogs */
+
+  /* --- Hairlines / borders --- */
+  --sa-line: rgba(255, 255, 255, 0.06);
+  --sa-line-strong: rgba(255, 255, 255, 0.10);
+  --sa-line-faint: rgba(255, 255, 255, 0.035);
+
+  /* --- Text (muted white ladder) --- */
+  --sa-text: rgba(237, 239, 242, 0.92);
+  --sa-text-secondary: rgba(237, 239, 242, 0.60);
+  --sa-text-tertiary: rgba(237, 239, 242, 0.38);
+  --sa-text-quaternary: rgba(237, 239, 242, 0.22);
+
+  /* --- Single restrained accent (cool engineering blue-white) --- */
+  --sa-accent: #cdd6e0;
+  --sa-accent-soft: rgba(205, 214, 224, 0.10);
+
+  /* --- Status (desaturated, calm — no traffic-light saturation) --- */
+  --sa-ok: #7fb59a;
+  --sa-warn: #c9b380;
+  --sa-danger: #c98d8d;
+
+  /* --- Radii (large) --- */
+  --sa-r-sm: 10px;
+  --sa-r-md: 16px;
+  --sa-r-lg: 24px;
+  --sa-r-xl: 32px;
+
+  /* --- Motion --- */
+  --sa-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --sa-ease-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Slow start → fast middle → slow finish; compositor-safe for controls. */
+  --sa-ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+  --sa-dur: 0.6s;
+
+  /* --- Shadows (minimal) --- */
+  --sa-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
+    0 24px 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* High-contrast accessibility theme (retained from original toggle) */
+[data-theme="contrast"] {
+  --sa-base: #000;
+  --sa-surface-0: #000;
+  --sa-surface-1: #000;
+  --sa-surface-2: #000;
+  --sa-surface-3: #000;
+  --sa-elevated: #000;
+  --sa-line: rgba(255, 255, 255, 0.35);
+  --sa-line-strong: rgba(255, 255, 255, 0.5);
+  --sa-line-faint: rgba(255, 255, 255, 0.25);
+  --sa-text: #fff;
+  --sa-text-secondary: rgba(255, 255, 255, 0.85);
+  --sa-text-tertiary: rgba(255, 255, 255, 0.65);
+}
+[data-theme="contrast"] .sa-surface,
+[data-theme="contrast"] .sa-panel,
+[data-theme="contrast"] .sa-card {
+  background: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: none !important;
+}
+[data-theme="contrast"] .sa-noise,
+[data-theme="contrast"] .sa-ambient {
+  display: none !important;
+}
+
+* {
+  border-color: var(--sa-line);
+}
+
+/* ============================================================================
+   CURSOR — macOS-style cursors at the standard (original) size, applied to
+   every cursor state. Classic black glyph with white outline + soft shadow.
+   Each url() has a hotspot coordinate and a native keyword fallback.
+   ========================================================================= */
+:root {
+  /* default arrow (hotspot at tip) */
+  --sa-cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.7' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/%3E%3C/filter%3E%3C/defs%3E%3Cpath filter='url(%23s)' d='M3 1.5 L3 17.5 L7.2 13.5 L10 20 L13 18.7 L10.2 12.3 L16 12.3 Z' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E") 3 1, auto;
+  /* pointing hand (hotspot at fingertip) */
+  --sa-cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s2' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.7' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23s2)' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.5 10.5 V4.8 a1.5 1.5 0 0 1 3 0 V9.5 h.6 V7.5 a1.5 1.5 0 0 1 3 0 v2 h.6 V8.5 a1.5 1.5 0 0 1 3 0 v1.5 h.6 v-.8 a1.3 1.3 0 0 1 2.6 0 V15 a5.5 5.5 0 0 1 -5.5 5.5 h-2 a5 5 0 0 1 -4.2 -2.3 L5.5 13.5 a1.5 1.5 0 0 1 2.5 -1.6 Z'/%3E%3C/g%3E%3C/svg%3E") 9 2, pointer;
+  /* text I-beam (hotspot at center) */
+  --sa-cursor-text: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s3' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.6' stdDeviation='0.6' flood-color='black' flood-opacity='0.4'/%3E%3C/filter%3E%3Cg filter='url(%23s3)' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M12 3 V21 M9 3.4 H15 M9 20.6 H15'/%3E%3C/g%3E%3Cg stroke='%23000' stroke-width='1' stroke-linecap='round' fill='none'%3E%3Cpath d='M12 3 V21 M9 3.4 H15 M9 20.6 H15'/%3E%3C/g%3E%3C/svg%3E") 12 12, text;
+  /* not-allowed (hotspot at center) */
+  --sa-cursor-not-allowed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s4' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.6' stdDeviation='0.6' flood-color='black' flood-opacity='0.4'/%3E%3C/filter%3E%3Cg filter='url(%23s4)'%3E%3Ccircle cx='12' cy='12' r='8.5' fill='none' stroke='%23fff' stroke-width='3.4'/%3E%3Cline x1='6' y1='6' x2='18' y2='18' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='12' r='8.5' fill='none' stroke='%23e5484d' stroke-width='2'/%3E%3Cline x1='6' y1='6' x2='18' y2='18' stroke='%23e5484d' stroke-width='2' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E") 12 12, not-allowed;
+  /* wait / progress spinner-ish glyph (hotspot at center) */
+  --sa-cursor-wait: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s5' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.6' stdDeviation='0.6' flood-color='black' flood-opacity='0.4'/%3E%3C/filter%3E%3Cg filter='url(%23s5)' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round'%3E%3Cpath d='M6 3 H18 L13 12 L18 21 H6 L11 12 Z'/%3E%3C/g%3E%3C/svg%3E") 12 12, wait;
+  /* help (arrow with question mark) */
+  --sa-cursor-help: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s6' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.7' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/%3E%3C/filter%3E%3Cpath filter='url(%23s6)' d='M3 1.5 L3 17.5 L7.2 13.5 L10 20 L13 18.7 L10.2 12.3 L16 12.3 Z' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round'/%3E%3Ctext x='17.5' y='9' font-family='Georgia,serif' font-size='9' font-weight='700' fill='%23fff' stroke='%23000' stroke-width='0.4' text-anchor='middle'%3E?%3C/text%3E%3C/svg%3E") 3 1, help;
+  /* move (four-way) */
+  --sa-cursor-move: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s7' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.6' stdDeviation='0.6' flood-color='black' flood-opacity='0.4'/%3E%3C/filter%3E%3Cpath filter='url(%23s7)' d='M12 2 L15 6 H13 V11 H18 V9 L22 12 L18 15 V13 H13 V18 H15 L12 22 L9 18 H11 V13 H6 V15 L2 12 L6 9 V11 H11 V6 H9 Z' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, move;
+  /* grab / grabbing (open hand) */
+  --sa-cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cfilter id='s8' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='0.7' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/%3E%3C/filter%3E%3Cg filter='url(%23s8)' fill='%23000' stroke='%23fff' stroke-width='1' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M6 12 V9 a1.3 1.3 0 0 1 2.6 0 v2 h.5 V7.5 a1.3 1.3 0 0 1 2.6 0 v3.5 h.5 V7 a1.3 1.3 0 0 1 2.6 0 v4 h.5 V8.5 a1.3 1.3 0 0 1 2.6 0 V15 a5 5 0 0 1 -5 5 h-1.5 a5 5 0 0 1 -4.3 -2.5 L4.5 14 a1.3 1.3 0 0 1 2.3 -1.2 Z'/%3E%3C/g%3E%3C/svg%3E") 12 6, grab;
+}
+
+html,
+body,
+.sa-nav,
+header {
+  cursor: var(--sa-cursor-arrow);
+}
+
+a,
+button,
+[role="button"],
+label,
+select,
+summary,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+.sa-btn,
+.sa-navlink,
+.sa-interactive {
+  cursor: var(--sa-cursor-pointer);
+}
+
+/* Text inputs / editable areas use the macOS I-beam */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+textarea,
+[contenteditable="true"] {
+  cursor: var(--sa-cursor-text);
+}
+
+/* Disabled controls */
+:disabled,
+[aria-disabled="true"],
+.sa-btn:disabled {
+  cursor: var(--sa-cursor-not-allowed) !important;
+}
+
+/* Other native states, restyled to match */
+[title],
+[data-help] {
+  cursor: var(--sa-cursor-help);
+}
+[draggable="true"] {
+  cursor: var(--sa-cursor-grab);
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--sa-base);
+  color: var(--sa-text);
+  font-family: var(--font-sans);
+  letter-spacing: -0.006em;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(205, 214, 224, 0.18);
+  color: #fff;
+}
+
+/* Custom, quiet scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+  background-clip: content-box;
+}
+
+/* ============================================================================
+   AMBIENT BACKGROUND LAYERS
+   Very faint radial glow + vignette + near-invisible noise grain.
+   ========================================================================= */
+
+.sa-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sa-ambient::before {
+  /* soft cool light pools, top */
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(
+      50% 40% at 22% 0%,
+      rgba(120, 140, 170, 0.10) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      45% 45% at 85% 12%,
+      rgba(150, 160, 180, 0.06) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      60% 50% at 50% 110%,
+      rgba(90, 110, 140, 0.07) 0%,
+      transparent 60%
+    );
+}
+
+.sa-ambient::after {
+  /* vignette */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 100% at 50% 0%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* Near-invisible film grain via SVG noise data-uri */
+.sa-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Content wrapper sits above ambient layers */
+.sa-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* ============================================================================
+   SURFACES & MATERIALS
+   ========================================================================= */
+
+.sa-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.018),
+    rgba(255, 255, 255, 0)
+  ),
+  var(--sa-surface-1);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-r-lg);
+}
+
+.sa-panel {
+  background: color-mix(in srgb, var(--sa-surface-2) 72%, transparent);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-r-lg);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.sa-glass {
+  background: color-mix(in srgb, var(--sa-surface-0) 55%, transparent);
+  border: 1px solid var(--sa-line-strong);
+  backdrop-filter: blur(24px) saturate(130%);
+  -webkit-backdrop-filter: blur(24px) saturate(130%);
+}
+
+.sa-surface {
+  background: var(--sa-surface-1);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-r-md);
+}
+
+.sa-hairline {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--sa-line-strong) 20%,
+    var(--sa-line-strong) 80%,
+    transparent
+  );
+}
+
+/* Subtle interactive lift for cards */
+.sa-interactive {
+  transition: border-color var(--sa-dur) var(--sa-ease),
+    background-color var(--sa-dur) var(--sa-ease),
+    transform var(--sa-dur) var(--sa-ease);
+  will-change: transform;
+}
+.sa-interactive:hover {
+  border-color: var(--sa-line-strong);
+  background-color: color-mix(in srgb, var(--sa-surface-2) 80%, transparent);
+  transform: translateY(-2px);
+}
+.sa-interactive:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ========================================================================= */
+
+.sa-eyebrow {
+  font-family: var(--font-serif);
+  font-size: 0.6875rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--sa-text-tertiary);
+  font-weight: 600;
+}
+
+.sa-display {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  color: var(--sa-text);
+}
+
+.sa-heading {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+}
+
+.sa-lead {
+  color: var(--sa-text-secondary);
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+.sa-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum", "zero";
+  letter-spacing: -0.01em;
+}
+
+/* Book Antiqua helper for inline menu items / list items / labels */
+.sa-serif {
+  font-family: var(--font-serif);
+}
+
+/* ----------------------------------------------------------------------------
+   WORDMARK — "SYSTEM A" in Book Antiqua with a 3D extruded look.
+   Lit from the top-right: highlight sits top-right, extrusion recedes toward
+   bottom-left, giving a solid, engraved-metal volume seen from top-right.
+   ------------------------------------------------------------------------- */
+.sa-wordmark {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #eef1f5;
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1;
+  /* top-right light: subtle bright edge up-right, deep body extruded down-left */
+  text-shadow:
+    0.5px -0.5px 0 rgba(255, 255, 255, 0.55),
+    -1px 1px 0 rgba(120, 124, 132, 0.9),
+    -2px 2px 0 rgba(96, 100, 108, 0.85),
+    -3px 3px 0 rgba(74, 78, 86, 0.8),
+    -4px 4px 0 rgba(54, 58, 66, 0.75),
+    -5px 5px 0 rgba(38, 41, 48, 0.7),
+    -6px 6px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* Larger hero variant for the big footer / hero contexts if needed */
+.sa-wordmark-lg {
+  letter-spacing: 0.16em;
+  text-shadow:
+    1px -1px 0 rgba(255, 255, 255, 0.6),
+    -1.5px 1.5px 0 rgba(120, 124, 132, 0.9),
+    -3px 3px 0 rgba(96, 100, 108, 0.85),
+    -4.5px 4.5px 0 rgba(74, 78, 86, 0.8),
+    -6px 6px 0 rgba(54, 58, 66, 0.75),
+    -7.5px 7.5px 0 rgba(38, 41, 48, 0.7),
+    -9px 9px 10px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="contrast"] .sa-wordmark,
+[data-theme="contrast"] .sa-wordmark-lg {
+  color: #fff;
+  text-shadow: -2px 2px 0 rgba(255, 255, 255, 0.35);
+}
+
+.sa-text-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 255, 255, 0.55)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ============================================================================
+   CONTROLS — buttons, inputs, selects
+   ========================================================================= */
+
+.sa-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  overflow: hidden;
+  border-radius: 0.28rem;
+  filter: drop-shadow(0 0 0.7rem rgba(205, 214, 224, 0.16));
+}
+.sa-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+.sa-mark-lg {
+  width: clamp(4.25rem, 13vw, 8.5rem);
+  height: clamp(4.25rem, 13vw, 8.5rem);
+  filter: drop-shadow(0 0 2rem rgba(205, 214, 224, 0.3));
+}
+
+.sa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  border: 1px solid transparent;
+  cursor: var(--sa-cursor-pointer);
+  transition: transform 0.4s var(--sa-ease),
+    background-color 0.4s var(--sa-ease), border-color 0.4s var(--sa-ease),
+    color 0.4s var(--sa-ease), opacity 0.4s var(--sa-ease);
+  will-change: transform;
+}
+.sa-btn:active {
+  transform: scale(0.985);
+}
+.sa-btn:disabled {
+  opacity: 0.45;
+  cursor: var(--sa-cursor-not-allowed);
+}
+/* Every action button carries a small terminal-style side glyph. It gives the
+   whole System A surface a consistent affordance without turning the UI into
+   a row of oversized icon buttons. */
+.sa-btn::after {
+  content: "↗";
+  display: inline-block;
+  margin-left: 0.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  line-height: 1;
+  opacity: 0.58;
+  transform: translateY(-0.02em);
+  transition: opacity 0.22s var(--sa-ease), transform 0.22s var(--sa-ease);
+}
+.sa-btn:hover:not(:disabled)::after {
+  opacity: 0.95;
+  transform: translate(0.1rem, -0.08rem);
+}
+.sa-btn:disabled::after {
+  opacity: 0.35;
+}
+
+.sa-btn-primary {
+  background: #f2f4f7;
+  color: #0a0b0c;
+}
+.sa-btn-primary:hover:not(:disabled) {
+  background: #fff;
+}
+
+.sa-btn-ghost {
+  background: transparent;
+  color: var(--sa-text-secondary);
+  border-color: var(--sa-line-strong);
+}
+.sa-btn-ghost:hover:not(:disabled) {
+  color: var(--sa-text);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sa-btn-danger {
+  background: transparent;
+  color: var(--sa-danger);
+  border-color: rgba(201, 141, 141, 0.35);
+}
+.sa-btn-danger:hover:not(:disabled) {
+  background: rgba(201, 141, 141, 0.08);
+  border-color: rgba(201, 141, 141, 0.5);
+}
+
+.sa-input,
+.sa-textarea,
+.sa-select {
+  width: 100%;
+  background: var(--sa-surface-0);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-r-sm);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--sa-text);
+  transition: border-color 0.3s var(--sa-ease-soft),
+    box-shadow 0.3s var(--sa-ease-soft), background-color 0.3s var(--sa-ease-soft);
+}
+.sa-input::placeholder,
+.sa-textarea::placeholder {
+  color: var(--sa-text-quaternary);
+}
+.sa-input:focus,
+.sa-textarea:focus,
+.sa-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 3px rgba(205, 214, 224, 0.08);
+  background: var(--sa-surface-1);
+}
+.sa-textarea {
+  resize: vertical;
+  font-family: var(--font-mono);
+}
+
+/* ---- Animated native controls ---------------------------------------------
+   These controls keep their native keyboard/form semantics but use the same
+   restrained motion language as the custom switches and buttons. */
+.sa-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  margin: 0;
+  border: 1px solid var(--sa-line-strong);
+  border-radius: 4px;
+  background: var(--sa-surface-0);
+  display: inline-grid;
+  place-content: center;
+  transition: background-color 0.22s var(--sa-ease),
+    border-color 0.22s var(--sa-ease), transform 0.22s var(--sa-ease),
+    box-shadow 0.22s var(--sa-ease);
+}
+.sa-checkbox::before {
+  content: "";
+  width: 0.36rem;
+  height: 0.6rem;
+  border-right: 1.5px solid #0a0b0c;
+  border-bottom: 1.5px solid #0a0b0c;
+  transform: translateY(-0.06rem) rotate(45deg) scale(0);
+  opacity: 0;
+  transition: transform 0.22s var(--sa-ease), opacity 0.18s var(--sa-ease);
+}
+.sa-checkbox:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.sa-checkbox:active {
+  transform: scale(0.9);
+}
+.sa-checkbox:checked {
+  border-color: var(--sa-accent);
+  background: var(--sa-accent);
+  box-shadow: 0 0 0 3px var(--sa-accent-soft);
+}
+.sa-checkbox:checked::before {
+  transform: translateY(-0.06rem) rotate(45deg) scale(1);
+  opacity: 1;
+}
+
+.sa-range {
+  accent-color: var(--sa-accent);
+  cursor: var(--sa-cursor-pointer);
+}
+.sa-range::-webkit-slider-runnable-track {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--sa-line-strong);
+}
+.sa-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.375rem;
+  border: 1px solid var(--sa-accent);
+  border-radius: 999px;
+  background: var(--sa-accent);
+  transition: transform 0.22s var(--sa-ease), box-shadow 0.22s var(--sa-ease);
+}
+.sa-range:hover::-webkit-slider-thumb,
+.sa-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 4px var(--sa-accent-soft);
+}
+.sa-range:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+.sa-range::-moz-range-track {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--sa-line-strong);
+}
+.sa-range::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--sa-accent);
+  border-radius: 999px;
+  background: var(--sa-accent);
+  transition: transform 0.22s var(--sa-ease), box-shadow 0.22s var(--sa-ease);
+}
+.sa-range:hover::-moz-range-thumb,
+.sa-range:focus-visible::-moz-range-thumb {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 4px var(--sa-accent-soft);
+}
+.sa-range:active::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+/* ---- Number field with custom white steppers -----------------------------
+   Hide the native spinner buttons and reserve room on the right for our own
+   refined up/down arrows. */
+.sa-number-field {
+  position: relative;
+}
+.sa-number-field input[type="number"] {
+  padding-right: 2.6rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.sa-number-field input[type="number"]::-webkit-outer-spin-button,
+.sa-number-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.sa-stepper {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 2.1rem;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--sa-line);
+  border-radius: 0 var(--sa-r-sm) var(--sa-r-sm) 0;
+  overflow: hidden;
+}
+.sa-stepper button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--sa-text-tertiary);
+  transition: background-color 0.18s var(--sa-ease-soft),
+    color 0.18s var(--sa-ease-soft);
+  cursor: var(--sa-cursor-pointer);
+}
+.sa-stepper button:first-child {
+  border-bottom: 1px solid var(--sa-line);
+}
+.sa-stepper button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+.sa-stepper button:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.sa-stepper svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ---- Native <select> dropdown option colours ----------------------------
+   Make the highlighted/selected option white with black text instead of the
+   browser's default blue highlight. */
+.sa-select option {
+  background-color: var(--sa-surface-1);
+  color: var(--sa-text);
+}
+.sa-select option:checked,
+.sa-select option:hover,
+.sa-select option:focus {
+  background: #ffffff !important;
+  color: #0a0b0c !important;
+  /* WebKit uses box-shadow to paint the option highlight colour */
+  box-shadow: 0 0 0 100px #ffffff inset;
+  -webkit-text-fill-color: #0a0b0c;
+}
+.sa-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--sa-text-tertiary);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+/* Focus-visible ring for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sa-base), 0 0 0 4px rgba(205, 214, 224, 0.45);
+  border-radius: 6px;
+}
+
+/* Screen-reader-only utility: visually hidden but announced by assistive tech. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* "Skip to main content" link: hidden until focused via keyboard. */
+.sa-skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-150%);
+  background: var(--sa-surface-1);
+  color: var(--sa-text);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-r-sm);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
+  transition: transform 0.2s var(--sa-ease-soft);
+}
+.sa-skip-link:focus {
+  transform: translateY(0);
+}
+
+/* Restricted (muted/banned) "unavailable" state. */
+.sa-unavailable {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+.sa-unavailable * {
+  pointer-events: none;
+}
+
+/* Small enter animation for conditionally mounted panels/forms. It is used for
+   stateful sections that do not need a full AnimatePresence wrapper. */
+.sa-reveal {
+  animation: sa-reveal 0.32s var(--sa-ease) both;
+  transform-origin: top center;
+}
+@keyframes sa-reveal {
+  from { opacity: 0; transform: translateY(-6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Respect users who prefer reduced motion: drop non-essential animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   STATUS / BADGES / INDICATORS
+   ========================================================================= */
+
+.sa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--sa-line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--sa-text-secondary);
+}
+
+.sa-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex: none;
+}
+.sa-dot-ok {
+  background: var(--sa-ok);
+  box-shadow: 0 0 0 3px rgba(127, 181, 154, 0.15);
+}
+.sa-dot-err {
+  background: var(--sa-danger);
+  box-shadow: 0 0 0 3px rgba(201, 141, 141, 0.15);
+}
+.sa-dot-live {
+  animation: sa-pulse 2.4s var(--sa-ease-soft) infinite;
+}
+
+@keyframes sa-error-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-2px, 0, 0); }
+  50% { transform: translate3d(2px, 0, 0); }
+  75% { transform: translate3d(-1px, 0, 0); }
+}
+.sa-error-shake {
+  animation: sa-error-shake 0.28s var(--sa-ease-soft) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sa-error-shake { animation: none !important; }
+}
+
+@keyframes sa-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ============================================================================
+   NAV
+   ========================================================================= */
+
+.sa-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--sa-base) 60%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border-bottom: 1px solid var(--sa-line-faint);
+}
+
+.sa-navlink {
+  font-family: var(--font-serif);
+  font-size: 0.8125rem;
+  color: var(--sa-text-tertiary);
+  transition: color 0.3s var(--sa-ease), transform 0.22s var(--sa-ease);
+  position: relative;
+}
+.sa-navlink:hover {
+  color: var(--sa-text);
+}
+.sa-navlink:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Press feedback for compact controls that are not full .sa-btn elements. */
+.sa-pressable {
+  transition: transform 0.22s var(--sa-ease), color 0.22s var(--sa-ease),
+    background-color 0.22s var(--sa-ease), border-color 0.22s var(--sa-ease),
+    opacity 0.22s var(--sa-ease);
+}
+.sa-pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Plain buttons that predate the design-system utility still receive the same
+   tactile press response. Existing .sa-btn/.sa-navlink rules remain more
+   specific in intent, while this closes the animation gap for compact action
+   and segmented-control buttons. */
+button:not(.sa-btn):not(.sa-navlink):not(.sa-pressable):not(:disabled) {
+  transition-property: transform, color, background-color, border-color, opacity;
+  transition-duration: 0.22s;
+  transition-timing-function: var(--sa-ease);
+}
+button:not(.sa-btn):not(.sa-navlink):not(.sa-pressable):not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Dashboard is rendered at 90% scale (equivalent to browser zoom 90%). */
+.sa-dashboard-zoom {
+  zoom: 0.9;
+}
+/* Firefox < 126 fallback: emulate browser zoom via transform. */
+@supports not (zoom: 1) {
+  .sa-dashboard-zoom {
+    transform: scale(0.9);
+    transform-origin: top center;
+    width: 111.111%;
+    margin-left: -5.5555%;
+  }
+}
+
+/* Fine engineering grid background (dashboard) */
+.sa-grid-bg {
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    #000 30%,
+    transparent 80%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    #000 30%,
+    transparent 80%
+  );
+}
+
+/* Dashboard grid drift: only background-position moves, keeping the animation
+   on the compositor and avoiding layout/paint-heavy geometry changes. */
+.sa-grid-bg {
+  animation: sa-grid-drift 28s var(--sa-ease-smooth) infinite alternate;
+  will-change: background-position;
+}
+@keyframes sa-grid-drift {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 28px 20px, -20px 28px; }
+}
+
+/* ============================================================================
+   REACTIVE 3D FIELD — text blur + drifting veil
+   ========================================================================= */
+
+/* Text blocks sit over the moving 3D field. A soft, slowly drifting blur is
+   applied to the field directly behind the text, so the visible part of the
+   structure near the text softens — and the blur itself "floats". */
+.sa-repel {
+  position: relative;
+  isolation: isolate;
+}
+.sa-repel::before {
+  content: "";
+  position: absolute;
+  inset: -8% -6%;
+  z-index: -1;
+  border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  background: radial-gradient(
+    60% 60% at 50% 50%,
+    color-mix(in srgb, var(--sa-base) 72%, transparent) 0%,
+    color-mix(in srgb, var(--sa-base) 45%, transparent) 55%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
+  animation: sa-blob 18s var(--sa-ease-soft) infinite alternate;
+  will-change: transform, border-radius;
+  pointer-events: none;
+}
+
+@keyframes sa-blob {
+  0% {
+    border-radius: 42% 58% 55% 45% / 55% 45% 58% 42%;
+    transform: translate3d(-1.2%, -1%, 0) scale(1.02) rotate(-1.5deg);
+  }
+  50% {
+    border-radius: 55% 45% 42% 58% / 45% 58% 42% 55%;
+    transform: translate3d(1.4%, 1.2%, 0) scale(1.06) rotate(1.5deg);
+  }
+  100% {
+    border-radius: 48% 52% 60% 40% / 52% 48% 45% 55%;
+    transform: translate3d(-0.8%, 1%, 0) scale(1.03) rotate(-0.8deg);
+  }
+}
+
+/* Glass cards let the moving field show faintly through them. */
+.sa-glass-panel {
+  background: color-mix(in srgb, var(--sa-surface-1) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+}
+
+/* Drifting darkening veil over the whole field: keeps it calm, never flat. */
+.sa-field-veil {
+  position: absolute;
+  inset: -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      45% 40% at 30% 25%,
+      transparent 0%,
+      color-mix(in srgb, var(--sa-base) 55%, transparent) 80%
+    ),
+    radial-gradient(
+      50% 45% at 75% 70%,
+      transparent 0%,
+      color-mix(in srgb, var(--sa-base) 45%, transparent) 85%
+    );
+  animation: sa-veil 26s var(--sa-ease-smooth) infinite alternate;
+  will-change: transform;
+}
+@keyframes sa-veil {
+  0% { transform: translate3d(-2%, -1.5%, 0) scale(1.05); }
+  100% { transform: translate3d(2.5%, 2%, 0) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-repel::before,
+  .sa-field-veil {
+    animation: none !important;
+  }
+}
+
+/* Consistent accelerate/decelerate easing for the small state changes done with
+   Tailwind transition utilities (pill toggles, hover states, arrows). Gives the
+   whole UI the same smooth ease-in-out feel instead of the browser default. The
+   reduced-motion block below still neutralises these for users who ask for it. */
+.transition-transform {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 0.32s;
+}
+.transition-colors {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.28s;
+}
+
+/* Unified interaction motion: transforms/opacity stay compositor-friendly;
+   layout properties are intentionally excluded to preserve smooth frames. */
+.sa-btn,
+.sa-navlink,
+.sa-pressable,
+.sa-input,
+select,
+summary,
+[role="button"],
+[role="switch"] {
+  transition-timing-function: var(--sa-ease-smooth) !important;
+}
+.sa-btn,
+.sa-navlink,
+.sa-pressable,
+[role="button"],
+[role="switch"] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+.transition-transform {
+  transition-timing-function: var(--sa-ease-smooth);
+}
+.transition-colors {
+  transition-timing-function: var(--sa-ease-smooth);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

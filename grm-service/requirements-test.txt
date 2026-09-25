@@ -1,0 +1,4 @@
+# Test/CI dependencies for GRM. This file is never copied into the
+# production Docker image.
+-r requirements.txt
+pytest==9.1.1

@@ -1,0 +1,93 @@
+groups:
+  - name: grm-oracle-health
+    rules:
+      # Fewer than 2 independent oracle sources responded on the last cycle.
+      # The aggregator needs multiple sources for a trustworthy median; running
+      # on one source removes outlier protection.
+      - alert: GrmOracleSourcesDegraded
+        expr: grm_oracle_sources_healthy < 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GRM oracle sources degraded (<2 healthy)"
+          description: "Fewer than 2 oracle sources responded on the last GRM cycle for 10m. Median quality is reduced."
+
+      # No oracle source responded at all — the GRM cannot update from fresh data.
+      - alert: GrmOracleSourcesDown
+        expr: grm_oracle_sources_healthy == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "All GRM oracle sources are down"
+          description: "No oracle source responded on the last GRM cycle for 5m. The systemic GRM is running on stale data."
+
+      # The latest snapshot is stale — the scheduler may be stuck.
+      - alert: GrmSnapshotStale
+        expr: grm_last_snapshot_age_seconds > 3600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GRM snapshot is stale"
+          description: "The latest systemic-GRM snapshot is older than 1h; the scheduler may be stalled."
+
+  - name: system-a-availability
+    rules:
+      - alert: CoreDown
+        expr: up{job="core"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "System A Core is down"
+          description: "Prometheus cannot scrape the Core for 2m."
+
+      - alert: GrmServiceDown
+        expr: up{job="grm"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GRM Service is down"
+          description: "Prometheus cannot scrape the GRM Service for 2m."
+
+  - name: system-a-http-health
+    rules:
+      # Elevated 5xx rate on the Core (server errors reaching clients).
+      - alert: CoreHigh5xxRate
+        expr: |
+          sum(rate(http_requests_total{job="core",status=~"5.."}[5m]))
+            /
+          clamp_min(sum(rate(http_requests_total{job="core"}[5m])), 1e-9)
+            > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Core 5xx rate > 5%"
+          description: "More than 5% of Core responses were 5xx over 5m. Investigate DB/upstream errors."
+
+      # Latency regression: p95 request duration too high.
+      - alert: CoreHighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="core"}[5m])) by (le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Core p95 latency > 1s"
+          description: "95th-percentile Core request latency exceeded 1s for 10m."
+
+      # Rate-limit rejections spiking (possible abuse or misconfigured client).
+      - alert: CoreRateLimitSpike
+        expr: sum(rate(http_requests_total{job="core",status="429"}[5m])) > 1
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Core 429s elevated"
+          description: "Sustained 429 (rate-limited) responses from Core for 10m."

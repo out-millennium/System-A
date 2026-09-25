@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A single System A account. It can be reached through several sign-in
+/// methods (email/password, Google, GitHub) — all pointing at ONE account.
+/// accountName / password / apiKey are filled in only once onboarding is
+/// completed; until then the record is a "pending" account.
+model User {
+  id          String          @id @default(cuid())
+  email       String?         @unique
+  password    String?
+  accountName String?         @unique
+  apiKey      String?
+  onboarded   Boolean         @default(false)
+  // When the user last opened the notification bell. The badge counts system
+  // notifications newer than this, so the count is consistent across devices
+  // (localStorage was per-device). Null = never opened.
+  notificationsSeenAt DateTime?
+  createdAt   DateTime        @default(now())
+  accounts    LinkedAccount[]
+  resetTokens PasswordResetToken[]
+
+  // Two-factor authentication (TOTP).
+  totpSecret    String?   // base32 secret; set while enabling, kept once enabled
+  totpEnabled   Boolean   @default(false)
+  totpRecovery  String?   // JSON array of bcrypt-hashed one-time recovery codes
+
+  sessions      UserSession[]
+  events        SecurityEvent[]
+
+  // Administration. role is "user" or "admin"; adminLevel 1..5 for admins
+  // (5 = the single creator "system_admin"). Enforced server-side only.
+  role        String  @default("user")
+  adminLevel  Int?
+
+  // Admin-to-admin discipline (Stage 4). An admin muted by warnings can only
+  // do what lower admins can (view + appeal); mutedUntil is the end time.
+  adminMutedUntil DateTime?
+  adminMuteReason String?
+
+  // Moderation of the account by an admin (Stage 5). "banned" blocks login
+  // pages + dashboard (landing still viewable); "muted" allows viewing only.
+  // *Until null = permanent; a future date = timed.
+  bannedAt     DateTime?
+  bannedUntil  DateTime?
+  banReason    String?
+  // Permanent mark: set true the first time the account is banned and NEVER
+  // cleared (not even when the ban is lifted/expires). A once-banned account
+  // can never revoke its own API key or delete its account again.
+  wasBanned    Boolean   @default(false)
+  mutedAt      DateTime?
+  mutedUntil   DateTime?
+  muteReason   String?
+
+  authoredAnnouncements    Announcement[]             @relation("AnnouncementAuthor")
+  reviewedAnnouncements    Announcement[]             @relation("AnnouncementReviewer")
+  sentMessages             DirectMessage[]            @relation("DMSender")
+  receivedMessages         DirectMessage[]            @relation("DMRecipient")
+  warningsGiven            Warning[]                  @relation("WarningIssuer")
+  warningsReceived         Warning[]                  @relation("WarningTarget")
+  complaintsFiled          Complaint[]                @relation("ComplaintFiler")
+  adminApplications        AdminApplication[]         @relation("ApplicationApplicant")
+  moderationActionsGiven   ModerationAction[]         @relation("ModActor")
+  moderationActionsReceived ModerationAction[]        @relation("ModTarget")
+  moderationAppealsFiled   ModerationAppeal[]         @relation("ModAppealFiler")
+  deletionRequests         AccountDeletionRequest[]   @relation("DeletionRequester")
+  keyRevocationRequests    ApiKeyRevocationRequest[]  @relation("KeyRevocationRequester")
+  auditEntries             AuditLog[]                 @relation("AuditActor")
+
+  supportTicketsOpened     SupportTicket[]            @relation("SupportTicketUser")
+  supportTicketsAssigned   SupportTicket[]            @relation("SupportTicketAssignedAdmin")
+  supportTicketsClosed     SupportTicket[]            @relation("SupportTicketClosedBy")
+  supportMessages          SupportMessage[]           @relation("SupportMessageAuthor")
+  supportComplaintsFiled   SupportMessageComplaint[]  @relation("SupportComplaintFiler")
+  supportComplaintsReviewed SupportMessageComplaint[] @relation("SupportComplaintReviewer")
+}
+
+/// A sign-in method linked to a User. `credentials` = email/password,
+/// `google` / `github` = OAuth. (provider, providerAccountId) is unique so a
+/// given external identity can only belong to one System A account.
+model LinkedAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  email             String?
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/// A signed-in session (one per successful sign-in). JWT-strategy sessions are
+/// stateless, so we track them here to list active devices and allow remote
+/// revocation: the JWT carries this row's id (`sid`) and is rejected once the
+/// row is deleted or `revokedAt` is set.
+model UserSession {
+  id         String    @id @default(cuid())
+  userId     String
+  userAgent  String?
+  ip         String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// An append-only security event for the account (audit log): sign-in,
+/// method linked/unlinked, password changed, 2FA enabled/disabled, etc.
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  meta      String?  // optional JSON with extra context
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A single-use password-reset token. Only the SHA-256 hash of the token is
+/// stored; the raw token travels in the reset link. Tokens expire and are
+/// marked used once consumed.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A public system announcement written by an admin. Level-1 admins create
+/// announcements in "pending" state; a level >=2 admin approves or rejects
+/// them. Approved announcements are shown to everyone.
+model Announcement {
+  id          String    @id @default(cuid())
+  authorId    String
+  body        String
+  status      String    @default("pending") // pending | approved | rejected
+  reviewerId  String?
+  reviewNote  String?
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  author   User  @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("AnnouncementReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([authorId])
+}
+
+/// A direct message from an admin (level >=2) to a user. The recipient sees it
+/// in their dashboard; `readAt` marks it seen.
+model DirectMessage {
+  id          String    @id @default(cuid())
+  senderId    String
+  recipientId String
+  body        String
+  // System-generated receipt (e.g. "your appeal was reviewed"). When true the
+  // UI shows "System A" as the sender instead of the sender account, and the
+  // message is created already-read so it never bumps the unread badge.
+  system      Boolean   @default(false)
+  // For system receipts: the source activity id (e.g. "ap_<appealId>") this
+  // message was generated from, so each event yields exactly ONE receipt even
+  // across devices / cleared localStorage. Unique when present.
+  refId       String?   @unique
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  sender    User @relation("DMSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("DMRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+  @@index([senderId])
+}
+
+/// A warning issued by a higher-level admin to a lower-level admin. Three
+/// ACTIVE (non-revoked) warnings trigger an automatic mute (up to a month).
+model Warning {
+  id         String    @id @default(cuid())
+  issuerId   String
+  targetId   String
+  reason     String
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  issuer User @relation("WarningIssuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  target User @relation("WarningTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  complaints Complaint[]
+
+  @@index([targetId])
+  @@index([issuerId])
+}
+
+/// A complaint (appeal) an admin files about a warning issued to them by a
+/// higher admin. Reviewed by a level >=4 admin.
+model Complaint {
+  id         String    @id @default(cuid())
+  warningId  String
+  filerId    String
+  reason     String
+  status     String    @default("open") // open | upheld | dismissed
+  reviewNote String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  warning Warning @relation(fields: [warningId], references: [id], onDelete: Cascade)
+  filer   User    @relation("ComplaintFiler", fields: [filerId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([warningId])
+}
+
+/// An application from a regular user to become an admin. Reviewed by a level
+/// >=4 admin (level 4 may grant 1..3; the creator may grant 1..4). On approval
+/// the applicant's account is promoted and renamed to "admin####".
+model AdminApplication {
+  id             String    @id @default(cuid())
+  applicantId    String
+  reason         String
+  requestedLevel Int       @default(1)
+  status         String    @default("open") // open | approved | rejected | withdrawn
+  reviewNote     String?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  applicant User @relation("ApplicationApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([applicantId])
+}
+
+/// A record of a moderation action (ban/mute/unban/unmute) an admin applied to
+/// a user or lower admin. Kept as history for the moderator's audit list.
+model ModerationAction {
+  id         String    @id @default(cuid())
+  actorId    String
+  targetId   String
+  action     String    // ban | mute | unban | unmute
+  reason     String?
+  until      DateTime?
+  createdAt  DateTime  @default(now())
+
+  actor  User @relation("ModActor", fields: [actorId], references: [id], onDelete: Cascade)
+  target User @relation("ModTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  appeals ModerationAppeal[]
+
+  @@index([actorId])
+  @@index([targetId])
+}
+
+/// A user's appeal against a ban/mute. Reviewed by the admin one level above
+/// the actor (a level-4 punishment is appealed to the creator, level 5). If the
+/// punishment came from the creator (level 5) it cannot be appealed.
+model ModerationAppeal {
+  id         String   @id @default(cuid())
+  actionId   String
+  filerId    String
+  reason     String
+  status     String   @default("open") // open | upheld | dismissed
+  reviewNote String?
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+
+  action ModerationAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  filer  User             @relation("ModAppealFiler", fields: [filerId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([actionId])
+}
+
+/// An admin's request to delete their own account. Reviewed by level 4; if the
+/// requester is level 4, it is reviewed by the creator (level 5). On approval
+/// the account is deleted.
+model AccountDeletionRequest {
+  id          String    @id @default(cuid())
+  requesterId String
+  reason      String
+  status      String    @default("open") // open | approved | rejected
+  reviewNote  String?
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  requester User @relation("DeletionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([requesterId])
+}
+
+/// Append-only audit trail for high-privilege / sensitive actions (currently
+/// the creator's role changes, key revocations and account deletions). Target
+/// identity is stored as plain strings so entries survive account deletion; the
+/// actor keeps a nullable FK (set null if the actor is ever removed).
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String?
+  action     String   // e.g. creator.setRole | creator.revokeKey | creator.deleteAccount
+  targetName String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+/// An admin (level 1–4) requests revocation of their OWN API key (with a
+/// reason). Reviewed by level 4 (or the creator, if the requester IS level 4).
+/// The creator (level 5) cannot revoke their own key and cannot file this.
+model ApiKeyRevocationRequest {
+  id          String    @id @default(cuid())
+  requesterId String
+  reason      String
+  status      String    @default("open") // open | approved | rejected
+  reviewNote  String?
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  requester User @relation("KeyRevocationRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([requesterId])
+}
+
+/// A support conversation opened by a user and routed to a selected admin tier.
+/// The ticket remains a single auditable thread when it is escalated upward.
+model SupportTicket {
+  id               String   @id @default(cuid())
+  userId           String
+  category         String   @default("support") // support | proposal
+  requestedLevel   Int
+  assignedLevel    Int
+  assignedAdminId  String?
+  status           String   @default("open") // open | active | forwarded | closed | rejected
+  closedById       String?
+  closedAt         DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user          User  @relation("SupportTicketUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedAdmin User? @relation("SupportTicketAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  closedBy      User? @relation("SupportTicketClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  messages      SupportMessage[]
+
+  @@index([userId, status])
+  @@index([assignedAdminId, status])
+  @@index([status, updatedAt])
+}
+
+/// A message in a support thread. A forward is represented by a message from
+/// the forwarding admin, preserving the original user message in the same
+/// immutable conversation.
+model SupportMessage {
+  id             String   @id @default(cuid())
+  ticketId       String
+  authorId       String
+  body           String
+  kind           String   @default("message") // message | forward_note | decision | warning
+  attachmentData String?  @db.Text
+  attachmentMime String?
+  attachmentName String?
+  createdAt      DateTime @default(now())
+
+  ticket     SupportTicket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author     User                      @relation("SupportMessageAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  complaints SupportMessageComplaint[]
+
+  @@index([ticketId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+/// A complaint about one concrete support-chat message. Both participants may
+/// file one; level-4 admins review the queue.
+model SupportMessageComplaint {
+  id         String    @id @default(cuid())
+  messageId  String
+  filerId    String
+  reviewerId String?
+  reason     String
+  status     String    @default("open") // open | upheld | dismissed
+  reviewNote String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  message  SupportMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filer    User           @relation("SupportComplaintFiler", fields: [filerId], references: [id], onDelete: Cascade)
+  reviewer User?          @relation("SupportComplaintReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@unique([messageId, filerId])
+  @@index([status, createdAt])
+  @@index([filerId, createdAt])
+}
+
+/// Pseudonymous first-visit marker for the language prompt. The application
+/// stores a keyed HMAC of the visitor IP, never the raw IP address. It prevents
+/// the prompt from returning after a visitor clears cookies/localStorage.
+model VisitorLanguageVisit {
+  id          String   @id @default(cuid())
+  ipHash      String   @unique
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([lastSeenAt])
+}

@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+
+# Alerting rules for oracle health and service availability. Wire an
+# Alertmanager under `alerting:` to deliver them; rules evaluate regardless and
+# are visible in Prometheus' Alerts view.
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: core
+    static_configs:
+      - targets: ["core:8000"]
+
+  - job_name: grm
+    static_configs:
+      - targets: ["grm:8001"]

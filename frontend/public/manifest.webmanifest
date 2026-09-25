@@ -1,0 +1,14 @@
+{
+  "name": "System A",
+  "short_name": "System A",
+  "description": "System A — deterministic computational accounting infrastructure.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#060707",
+  "theme_color": "#060707",
+  "icons": [
+    { "src": "/system-a-mark.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/globe.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

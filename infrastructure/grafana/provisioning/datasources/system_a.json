@@ -1,0 +1,31 @@
+{
+  "title": "System A",
+  "panels": [
+    {
+      "title": "Request rate — core",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [{"expr": "rate(http_requests_total{job=\"core\"}[1m])", "legendFormat": "{{method}} {{handler}}"}]
+    },
+    {
+      "title": "Request rate — grm",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [{"expr": "rate(http_requests_total{job=\"grm\"}[1m])", "legendFormat": "{{method}} {{handler}}"}]
+    },
+    {
+      "title": "Error rate — core",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [{"expr": "rate(http_requests_total{job=\"core\",status=~\"4..|5..\"}[1m])", "legendFormat": "{{status}}"}]
+    },
+    {
+      "title": "Response time p95 — core",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [{"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"core\"}[5m]))", "legendFormat": "p95"}]
+    }
+  ],
+  "schemaVersion": 36,
+  "version": 1
+}
