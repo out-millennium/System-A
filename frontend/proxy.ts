@@ -23,7 +23,7 @@ function withCsp(req: NextRequest): NextResponse {
     // request nonce in this proxy setup. Allow those same-origin bootstrap
     // scripts explicitly; without this the public UI renders only its static
     // shell and hydration is blocked by CSP.
-    "script-src 'self' 'unsafe-inline'", 
+    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""}`,  
     "connect-src 'self'",
     "object-src 'none'",
     "form-action 'self'",

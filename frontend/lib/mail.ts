@@ -90,7 +90,7 @@ async function sendViaSmtp({ to, subject, text }: MailInput): Promise<void> {
 
 /** Build the absolute URL for a password-reset link. */
 export function resetLink(token: string): string {
-  const base = process.env.NEXTAUTH_URL || "http://localhost";
+  const base = process.env.NEXTAUTH_URL || "https://system-a.win";
   return `${base}/reset?token=${encodeURIComponent(token)}`;
 }
 

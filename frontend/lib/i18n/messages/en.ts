@@ -99,6 +99,7 @@ const en = {
       lead: "Create an account to interact with the ledger, or read the source and declarations first. The system is built to be examined.",
       createAccount: "Create account",
       readApi: "Read the API",
+    replayIntro: "Replay introduction",
     },
   },
 

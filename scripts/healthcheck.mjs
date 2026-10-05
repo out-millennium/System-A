@@ -23,8 +23,10 @@
 
      E2E (with --all or --e2e)
        - the repository's Playwright browser tests against the configured local
-         stack. E2E is deliberately not faked and never runs against a remote
-         production URL unless the operator explicitly supplies one.
+         stack, including mobile/tablet/desktop responsive UI, overflow,
+         labels, placeholder links, smooth scrolling and intro language/skip
+         controls. E2E is deliberately not faked and never runs against a
+         remote production URL unless the operator explicitly supplies one.
 
    Important safety rule: live checks never create accounts, credits, transfers,
    orders, payouts or blockchain transactions. Mutation logic is exercised by
@@ -128,13 +130,13 @@ let SYSTEM_A_URL =
   argValue("--system-a") ||
   process.env.HEALTHCHECK_SYSTEM_A_URL ||
   httpArgs[0] ||
-  "http://localhost";
+  "https://system-a.win";
 const mFlag = args.indexOf("--meridian");
 let MERIDIAN_URL =
   (mFlag >= 0 && args[mFlag + 1]) ||
   process.env.HEALTHCHECK_MERIDIAN_URL ||
   httpArgs[1] ||
-  "http://localhost:8080";
+  "https://merid.win";
 const REPORT_PATH =
   argValue("--report") ||
   process.env.HEALTHCHECK_REPORT ||
@@ -1217,6 +1219,7 @@ function checkFrontend() {
   tryCommand("Frontend ESLint", "npm run lint", FRONTEND, (output) => !/\b[1-9]\d* error/.test(output));
   tryCommand("Frontend unit tests", "npm test", FRONTEND, (output) => /# fail 0\b/.test(output));
   tryCommand("Frontend Prisma validation", "npx prisma validate", FRONTEND, (output) => /valid/i.test(output));
+  checkFile("Frontend responsive/mobile UI E2E", path.join(FRONTEND, "e2e", "ui-responsive.spec.ts"), ["375", "768", "scrollWidth", "sa-intro-root"]);
 }
 
 function checkMeridian() {

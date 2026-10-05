@@ -96,6 +96,7 @@ const zh: Messages = {
       lead: "创建账户以与账本交互，或先阅读源代码与声明文件。本系统为供检验而构建。",
       createAccount: "创建账户",
       readApi: "阅读 API",
+    replayIntro: "再次查看引导",
     },
   },
 

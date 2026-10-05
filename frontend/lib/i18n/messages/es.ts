@@ -96,6 +96,7 @@ const es: Messages = {
       lead: "Crea una cuenta para interactuar con el registro, o lee primero el código fuente y las declaraciones. El sistema está hecho para ser examinado.",
       createAccount: "Crear cuenta",
       readApi: "Leer la API",
+    replayIntro: "Repetir la introducción",
     },
   },
 

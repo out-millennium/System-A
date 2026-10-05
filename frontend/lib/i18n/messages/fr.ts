@@ -96,6 +96,7 @@ const fr: Messages = {
       lead: "Créez un compte pour interagir avec le registre, ou lisez d’abord le code source et les déclarations. Le système est conçu pour être examiné.",
       createAccount: "Créer un compte",
       readApi: "Lire l’API",
+    replayIntro: "Revoir l’introduction",
     },
   },
 

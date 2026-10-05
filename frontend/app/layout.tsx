@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import SkipLink from "@/components/SkipLink";
 import NoNumberWheel from "@/components/NoNumberWheel";
 import PublicChrome from "@/components/PublicChrome";
+import InterfaceSound from "@/components/InterfaceSound";
 
 // Body / readable text — Roboto (Latin + Cyrillic + Latin-ext for FR/ES)
 const roboto = Roboto({
@@ -67,6 +68,7 @@ export default function RootLayout({
               <ToastProvider>
                 <NoNumberWheel />
                 <PublicChrome />
+                <InterfaceSound />
                 <SkipLink />
                 {/* Ambient infrastructure background — faint light, vignette, grain */}
                 <div className="sa-ambient" aria-hidden="true" />

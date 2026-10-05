@@ -26,6 +26,7 @@ import SoundToggle from "@/components/SoundToggle";
 import type { TextRect } from "@/components/SceneCanvas";
 import { useT } from "@/lib/i18n";
 import SystemAMark from "@/components/SystemAMark";
+import InteractiveIntroduction from "@/components/InteractiveIntroduction";
 
 /* WebGL layer is client-only. */
 const SceneCanvas = dynamic(() => import("@/components/SceneCanvas"), {
@@ -117,6 +118,9 @@ function LandingContent({
   const [revealing, setRevealing] = useState(isWelcome);
   const [entranceReady, setEntranceReady] = useState(!isWelcome);
   const [introActive, setIntroActive] = useState(isWelcome);
+  const [introRunning, setIntroRunning] = useState(!isWelcome);
+  const [introReplayToken, setIntroReplayToken] = useState(0);
+  const [handoffActive, setHandoffActive] = useState(false);
   const [filterCleared, setFilterCleared] = useState(!isWelcome);
   // The language dialog waits for the initial viewport entrance, not for a
   // guessed timeout. Scroll-triggered reveals later on the page are separate
@@ -141,6 +145,28 @@ function LandingContent({
 
   const initialAnimationsComplete = navEntranceComplete && heroEntranceComplete;
 
+  // The first-visit experiment uses the existing server gate as a hint and a
+  // browser marker as the durable local fallback. It never stores identity or
+  // blocks a visitor permanently.
+  useEffect(() => {
+    // The cinematic introduction is local-browser UX. Unlike the language gate,
+    // it should not be suppressed by an IP-level visitor record: a cleared or
+    // new browser on the same network still deserves the introduction.
+    if (isWelcome) return;
+    try {
+      setIntroRunning(localStorage.getItem("sa_intro_seen") !== "1");
+    } catch {
+      setIntroRunning(true);
+    }
+  }, [isWelcome, visitorFirstVisit]);
+
+  function completeInteractiveIntro() {
+    try { localStorage.setItem("sa_intro_seen", "1"); } catch {}
+    setIntroRunning(false);
+    setHandoffActive(true);
+    window.setTimeout(() => setHandoffActive(false), 3300);
+  }
+
   useEffect(() => {
     if (!isWelcome) return;
     const t0 = window.setTimeout(() => setRevealing(false), 20);
@@ -150,7 +176,7 @@ function LandingContent({
     const t2 = window.setTimeout(() => {
       setFilterCleared(true);
       setIntroActive(false);
-    }, 1650);
+    }, 3300);
     return () => {
       window.clearTimeout(t0);
       window.clearTimeout(t1);
@@ -238,6 +264,9 @@ function LandingContent({
 
         <div
           className="relative z-10 min-h-screen"
+          data-intro-running={introRunning}
+          data-intro-welcome={isWelcome}
+          data-intro-server={String(visitorFirstVisit)}
           style={filterCleared ? undefined : wrapperStyle}
         >
           <Nav onInitialAnimationComplete={() => setNavEntranceComplete(true)} />
@@ -247,7 +276,7 @@ function LandingContent({
           <Determinism />
           <Declarations />
           <RecognizedApps />
-          <ClosingCTA />
+            <ClosingCTA onReplayIntro={() => { setIntroReplayToken((value) => value + 1); setIntroRunning(true); }} />
           <Footer />
         </div>
 
@@ -255,12 +284,18 @@ function LandingContent({
             entrance animations complete and the server IP gate allows it). */}
         <FirstVisitLanguage
           serverFirstVisit={visitorFirstVisit}
-          initialAnimationsComplete={initialAnimationsComplete}
+          initialAnimationsComplete={initialAnimationsComplete && !introRunning && !handoffActive}
+        />
+
+        <InteractiveIntroduction
+          active={introRunning}
+          replayToken={introReplayToken}
+          onDone={completeInteractiveIntro}
         />
 
         {/* Sign-out hand-off title overlay */}
         <AnimatePresence>
-          {introActive && (
+          {(introActive || handoffActive) && (
             <motion.div
               className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center"
               initial={{ opacity: 1 }}
@@ -273,14 +308,14 @@ function LandingContent({
                   className="sa-wordmark sa-wordmark-lg text-[clamp(2.5rem,9vw,7rem)]"
                   initial={{ opacity: 0.5, filter: "blur(0px)" }}
                   animate={{ opacity: [0.5, 1, 1, 0], filter: ["blur(0px)", "blur(0px)", "blur(0px)", "blur(12px)"] }}
-                  transition={{ duration: 1.35, times: [0, 0.18, 0.64, 1], ease: "linear" }}
+                  transition={{ duration: 2.7, times: [0, 0.18, 0.58, 1], ease: "linear" }}
                 >
                   SYSTEM&nbsp;A
                 </motion.span>
                 <motion.span
                   initial={{ opacity: 0, scale: 0.7, filter: "blur(16px)" }}
                   animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1, 1, 1.15], filter: ["blur(16px)", "blur(0px)", "blur(0px)", "blur(14px)"] }}
-                  transition={{ duration: 1.15, delay: 0.42, times: [0, 0.28, 0.7, 1], ease: "easeInOut" }}
+                  transition={{ duration: 2.1, delay: 0.9, times: [0, 0.2, 0.62, 1], ease: "easeInOut" }}
                 >
                   <SystemAMark className="sa-mark-lg" />
                 </motion.span>
@@ -309,7 +344,7 @@ function Nav({
   return (
     <motion.nav
       className="sa-nav"
-      initial={{ y: -24, opacity: 0 }}
+      initial={ready ? false : { y: -24, opacity: 0 }}
       animate={ready ? { y: 0, opacity: 1 } : { y: -24, opacity: 0 }}
       transition={{ duration: 0.8, ease: EASE }}
       onAnimationComplete={() => {
@@ -427,7 +462,7 @@ function Hero({
       <motion.div style={{ y, opacity }} className="mx-auto w-full max-w-[1400px]">
         <motion.div
           variants={stagger}
-          initial="hidden"
+          initial={ready ? false : "hidden"}
           animate={ready ? "show" : "hidden"}
           className="sa-repel max-w-4xl"
         >
@@ -471,7 +506,7 @@ function Hero({
 
         <motion.div
           variants={fadeUp}
-          initial="hidden"
+          initial={ready ? false : "hidden"}
           animate={ready ? "show" : "hidden"}
           transition={{ delay: 0.5 }}
           className="sa-repel mt-24 grid max-w-3xl grid-cols-2 gap-x-10 gap-y-6 border-t border-[var(--sa-line)] pt-8 sm:grid-cols-3"
@@ -794,7 +829,7 @@ function Declarations() {
 function RecognizedApps() {
   const t = useT();
   const meridianUrl =
-    process.env.NEXT_PUBLIC_MERIDIAN_URL || "https://meridian.example";
+    process.env.NEXT_PUBLIC_MERIDIAN_URL || "https://merid.win";
   return (
     <section
       id="recognized-applications"
@@ -853,7 +888,7 @@ function RecognizedApps() {
 /* ---------------------------------------------------------------------------
    Closing CTA
    ------------------------------------------------------------------------ */
-function ClosingCTA() {
+function ClosingCTA({ onReplayIntro }: { onReplayIntro: () => void }) {
   const t = useT();
   return (
     <section className="relative px-6 py-40 md:px-10 md:py-56">
@@ -875,6 +910,9 @@ function ClosingCTA() {
             <Link href="/api-docs" className="sa-btn sa-btn-ghost">
               {t("landing.cta.readApi")}
             </Link>
+            <button type="button" onClick={onReplayIntro} className="sa-btn sa-btn-ghost">
+              {t("landing.cta.replayIntro")}
+            </button>
           </div>
         </Reveal>
       </div>
