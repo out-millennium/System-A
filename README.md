@@ -1,6 +1,6 @@
 System A
 
-Version: v2.0.0
+Version: v2.0.1
 Status: Ready for launch
 
 System A is a formally declared, deterministic computational accounting system.
@@ -145,9 +145,9 @@ Version v2.0.0 establishes the current implementation baseline.
 
 ⸻
 
-v2.0.0
+v2.0.1
 
-System A v2.0.0 is the complete current implementation intended for public launch.
+System A v2.0.1 is the complete current implementation intended for public launch.
 
 The release represents the current production-ready state of the system.
 
